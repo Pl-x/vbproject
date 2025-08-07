@@ -1,0 +1,68 @@
+Here is the research text that served as the basis for the interactive web application. This content was organized and formatted to create the single-page experience you saw.
+
+***
+
+### The Illustrated Guide to Starknet, Cairo, and ZK-Rollups
+
+#### The Scalability Solution: ZK-Rollups
+
+This report explores the fundamental challenge of blockchain scalability and how Zero-Knowledge Rollups (ZK-Rollups) provide a powerful solution. Layer 2 solutions like ZK-Rollups are designed to solve this by handling transactions off-chain, inheriting Ethereum's security while dramatically boosting scalability.
+
+**The Blockchain Trilemma**
+Blockchains face a constant trade-off between three crucial properties: Security, Decentralization, and Scalability. It's incredibly difficult to maximize all three at once. Ethereum prioritizes security and decentralization, which creates a bottleneck for scalability, leading to high fees and slow transactions.
+
+**ZK-SNARKs vs. ZK-STARKs**
+ZK-Rollups rely on cryptographic proofs. The two dominant types are SNARKs and STARKs. While both serve to verify computations, they have key differences in their design and trade-offs. Starknet is built on the STARK proof system.
+
+* **ZK-STARKs (Scalable Transparent ARgument of Knowledge):** Do not require a trusted setup, making them more transparent and secure. They are quantum-resistant, relying on hash functions for their cryptographic security. The proofs are larger, which can lead to slightly higher on-chain verification costs.
+* **ZK-SNARKs (Succinct Non-Interactive ARgument of Knowledge):** Often require a trusted setup ceremony to generate keys, and if this setup is compromised, the system is at risk. Their proofs are smaller (succinct), which leads to faster and cheaper on-chain verification. However, they are generally not quantum-resistant, as they rely on elliptic curve cryptography.
+
+#### Inside Starknet: A STARK-Powered Rollup
+
+This section provides a breakdown of Starknet's core architecture and the key components that work together to process transactions securely and efficiently.
+
+**The Starknet Transaction Lifecycle**
+1.  **User Submits Transaction:** The process begins when a user initiates a transaction through their account contract on Starknet.
+2.  **Sequencer Batches Transactions:** The Sequencer receives transactions, orders them, and groups them into batches. It can handle a much higher throughput than Ethereum's mainnet.
+3.  **Prover Generates STARK Proof:** The Prover takes the batch of transactions and executes them, creating a single, compact STARK proof that mathematically guarantees the validity of every transaction in the batch.
+4.  **Verifier on Ethereum Validates Proof:** The STARK proof is sent to a Verifier smart contract on the Ethereum Layer 1. This contract performs a quick and cheap verification of the proof.
+5.  **State Update & Finality:** Once the Verifier contract accepts the proof, the Starknet Core contract on Ethereum updates its state to reflect the results of the off-chain transactions, achieving finality with Ethereum's security.
+
+---
+
+#### Building with Cairo
+
+Cairo is the native, Rust-inspired language for writing provable programs on Starknet. This section introduces Cairo's core concepts and essential tools for developers.
+
+**What is Cairo?**
+Cairo is a Turing-complete language specifically designed to generate STARK proofs. Any program written in Cairo can produce a cryptographic proof of its own correct execution. This is the magic that allows Starknet to verify massive computations off-chain. Its potential extends beyond blockchain to any field requiring verifiable computation, like AI and gaming.
+
+**Key Programming Concepts**
+* **`felt252` Type:** The primary data type is a field element, a 252-bit number. Arithmetic is modular, requiring careful handling.
+* **Native Account Abstraction:** All accounts are smart contracts, enabling flexible features like social recovery, session keys, and paying gas in any token.
+* **State Management:** Contract storage is managed explicitly, providing clear control over data persistence.
+
+**Developer Tooling & Resources**
+* **Scarb:** The official package manager and build toolchain for Cairo and Starknet projects.
+* **Starknet Foundry:** A fast toolchain for developing Starknet smart contracts.
+* **Starknet.js:** The primary JavaScript/TypeScript library for connecting frontends to Starknet.
+* **Starkli:** An intuitive command-line interface (CLI) for interacting with Starknet.
+* **OpenZeppelin Contracts:** A library of secure and battle-tested reusable smart contracts for Cairo.
+* **Local Devnets:** Tools like Starknet Devnet allow for rapid local testing without deploying to a live network.
+
+---
+
+#### Starknet's Ecosystem & Future
+
+The Starknet ecosystem is growing rapidly, with a diverse range of projects and a clear roadmap towards full decentralization.
+
+**Ecosystem Growth: Projects on Starknet**
+The number of user-facing projects on Starknet has shown significant growth.
+* **November 2023:** 72 projects
+* **November 2024:** 193 projects
+
+**Road to Decentralization**
+Starknet has a clear roadmap with three key pillars to achieve full decentralization.
+1.  **Staking (Economic Security):** A Proof-of-Stake (PoS) mechanism where validators stake STRK tokens to secure the network.
+2.  **Operation (SN Stack):** The open-sourcing of the Starknet Stack (SN Stack) allows anyone to run a node, fostering a decentralized network of operators.
+3.  **Governance (Community Control):** A phased approach to hand over control of protocol upgrades and treasury management to the community and STRK token holders.
