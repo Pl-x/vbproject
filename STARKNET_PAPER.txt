@@ -1,7 +1,3 @@
-Here is the research text that served as the basis for the interactive web application. This content was organized and formatted to create the single-page experience you saw.
-
-***
-
 ### The Illustrated Guide to Starknet, Cairo, and ZK-Rollups
 
 #### The Scalability Solution: ZK-Rollups
