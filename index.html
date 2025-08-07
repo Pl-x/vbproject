@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Illustrated Guide to Starknet, Cairo, and ZK-Rollups</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Calm Neutral" - A palette using beige as a base, with slate and sage greens for accents, and a dark charcoal for text to create a professional, calm, and readable experience. -->
+    <!-- Application Structure Plan: The SPA is designed as a narrative journey, guiding the user from the foundational problem (scalability) to the comprehensive solution (Starknet/Cairo). The structure is thematic, not linear like the report. It uses a top navigation bar to switch between four core concepts: 'The Problem & The Solution (ZK-Rollups)', 'Starknet Architecture', 'Building with Cairo', and 'Ecosystem & Future'. This approach allows users to either follow the logical flow or jump directly to their area of interest. Key interactions include toggleable content for comparisons (SNARKs vs. STARKs), a clickable architectural diagram to reveal detailed explanations, and interactive cards for developer tools. This structure was chosen to make a complex technical topic digestible and engaging, transforming a dense report into an exploratory learning tool. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Blockchain Trilemma -> Goal: Inform -> Viz/Method: HTML/CSS diagram with hover effects -> Interaction: Hover to highlight each point of the trilemma -> Justification: Visually represents the core conflict driving the need for L2s.
+        - Report Info: ZK-SNARKs vs. ZK-STARKs comparison table -> Goal: Compare -> Viz/Method: Interactive toggleable cards -> Interaction: Click buttons to switch between SNARK and STARK views -> Justification: More engaging and less overwhelming than a static table, allowing focused comparison.
+        - Report Info: Starknet Architecture (Sequencer, Prover, Verifier) -> Goal: Organize/Explain -> Viz/Method: Clickable HTML/CSS diagram -> Interaction: Click on a component (e.g., 'Prover') to display its detailed description -> Justification: Turns a static description into an interactive exploration, connecting visual components to their functions.
+        - Report Info: Starknet Project Growth -> Goal: Show Change -> Viz/Method: Chart.js Bar Chart -> Interaction: Hover over bars to see tooltips with exact numbers -> Justification: Provides a clear, quantitative visualization of the ecosystem's growth.
+        - Report Info: Cairo Development Tools -> Goal: Inform/Organize -> Viz/Method: Grid of interactive cards -> Interaction: Hover effect on cards -> Justification: A modern, clean way to present a list of tools and resources.
+        Library/Method: All visuals are built with HTML/Tailwind CSS or Chart.js (Canvas), adhering to the NO SVG/Mermaid constraint.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5DC; /* Beige */
+            color: #2F4F4F; /* Dark Slate Gray */
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #2E8B57; /* Sea Green */
+            border-bottom-color: #2E8B57;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .btn {
+            background-color: #2E8B57; /* Sea Green */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #3CB371; /* Medium Sea Green */
+        }
+        .btn-secondary {
+            background-color: #8FBC8F; /* Dark Sea Green */
+        }
+        .btn-secondary:hover {
+            background-color: #98FB98; /* Pale Green */
+        }
+        .btn-toggle {
+            background-color: #E0E0E0;
+            color: #2F4F4F;
+        }
+        .btn-toggle.active {
+            background-color: #2E8B57;
+            color: white;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .architecture-diagram div {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .architecture-diagram div:hover {
+            background-color: #98FB98 !important; /* Pale Green */
+        }
+        .architecture-diagram div.selected {
+            background-color: #2E8B57 !important; /* Sea Green */
+            color: white;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-2xl font-bold text-gray-800">Starknet Explained</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a id="nav-zk" class="nav-link active">ZK-Rollups</a>
+                        <a id="nav-starknet" class="nav-link">Starknet Architecture</a>
+                        <a id="nav-cairo" class="nav-link">Building with Cairo</a>
+                        <a id="nav-ecosystem" class="nav-link">Ecosystem & Future</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="zk">ZK-Rollups</option>
+                        <option value="starknet">Starknet Architecture</option>
+                        <option value="cairo">Building with Cairo</option>
+                        <option value="ecosystem">Ecosystem & Future</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ZK-Rollups Section -->
+        <section id="section-zk" class="content-section active">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">The Scalability Solution: ZK-Rollups</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">This section explores the fundamental challenge of blockchain scalability and how Zero-Knowledge Rollups (ZK-Rollups) provide a powerful solution. You will learn about the core concepts, compare the two main types of ZK proofs (SNARKs vs. STARKs), and understand their advantages for scaling Ethereum.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center mb-16">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-4">The Blockchain Trilemma</h3>
+                    <p class="text-gray-600 mb-4">Blockchains face a constant trade-off between three crucial properties: Security, Decentralization, and Scalability. It's incredibly difficult to maximize all three at once. Ethereum prioritizes security and decentralization, which creates a bottleneck for scalability, leading to high fees and slow transactions.</p>
+                    <p class="text-gray-600">Layer 2 solutions like ZK-Rollups are designed to solve this by handling transactions off-chain, inheriting Ethereum's security while dramatically boosting scalability.</p>
+                </div>
+                <div class="flex justify-center items-center p-6">
+                    <div class="relative w-64 h-64">
+                         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-rose-100 rounded-full flex items-center justify-center text-center font-semibold text-rose-800 p-2 shadow-lg">Security</div>
+                         <div class="absolute bottom-0 left-0 w-32 h-32 bg-sky-100 rounded-full flex items-center justify-center text-center font-semibold text-sky-800 p-2 shadow-lg">Decentralization</div>
+                         <div class="absolute bottom-0 right-0 w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center text-center font-semibold text-amber-800 p-2 shadow-lg">Scalability</div>
+                         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-bold text-gray-400">?</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 md:p-8 mb-16">
+                <h3 class="text-2xl font-bold text-center mb-6">ZK-SNARKs vs. ZK-STARKs</h3>
+                <p class="text-center max-w-2xl mx-auto text-gray-600 mb-8">ZK-Rollups rely on cryptographic proofs. The two dominant types are SNARKs and STARKs. While both serve to verify computations, they have key differences in their design and trade-offs. Starknet is built on the STARK proof system.</p>
+                <div class="flex justify-center mb-6 space-x-4">
+                    <button id="btn-snark" class="btn-toggle px-6 py-2 rounded-full font-semibold">ZK-SNARKs</button>
+                    <button id="btn-stark" class="btn-toggle active px-6 py-2 rounded-full font-semibold">ZK-STARKs</button>
+                </div>
+                <div id="proof-comparison-content"></div>
+            </div>
+        </section>
+
+        <!-- Starknet Architecture Section -->
+        <section id="section-starknet" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Inside Starknet: A STARK-Powered Rollup</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">This section provides a visual and interactive breakdown of Starknet's core architecture. Explore the key components—the Sequencer, Prover, and on-chain Verifier—and understand how they work together to process transactions securely and efficiently. Click on each component in the diagram to learn about its specific role.</p>
+            </div>
+
+            <div class="card p-6 md:p-8">
+                <h3 class="text-2xl font-bold text-center mb-8">The Starknet Transaction Lifecycle</h3>
+                <div class="architecture-diagram grid grid-cols-1 md:grid-cols-5 gap-4 items-center text-center font-semibold">
+                    <div id="arch-user" class="p-4 bg-gray-200 rounded-lg">1. User Submits Transaction</div>
+                    <div class="text-2xl text-gray-400 hidden md:block">&rarr;</div>
+                    <div id="arch-sequencer" class="p-4 bg-gray-200 rounded-lg">2. Sequencer Batches TXs</div>
+                    <div class="text-2xl text-gray-400 hidden md:block">&rarr;</div>
+                    <div id="arch-prover" class="p-4 bg-gray-200 rounded-lg">3. Prover Generates STARK Proof</div>
+                </div>
+                 <div class="flex justify-center my-4">
+                    <div class="text-2xl text-gray-400">&darr;</div>
+                </div>
+                <div class="architecture-diagram grid grid-cols-1 md:grid-cols-3 gap-4 items-center text-center font-semibold">
+                    <div id="arch-verifier" class="p-4 bg-gray-200 rounded-lg">4. Verifier on Ethereum Validates Proof</div>
+                     <div class="text-2xl text-gray-400 hidden md:block">&rarr;</div>
+                    <div id="arch-finality" class="p-4 bg-gray-200 rounded-lg">5. State Updated on L1 (Finality)</div>
+                </div>
+
+                <div id="architecture-details" class="mt-8 p-6 bg-beige-50 rounded-lg min-h-[150px] border border-gray-200">
+                    <p class="text-gray-500">Click on a component above to see details here.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Building with Cairo Section -->
+        <section id="section-cairo" class="content-section">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Building with Cairo</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">Cairo is the native, Rust-inspired language for writing provable programs on Starknet. This section introduces Cairo's core concepts, the development workflow, and essential security practices. Explore the tools that make up the robust developer ecosystem.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-16">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-4">What is Cairo?</h3>
+                    <p class="text-gray-600 mb-4">Cairo is a Turing-complete language specifically designed to generate STARK proofs. This means any program written in Cairo can produce a cryptographic proof of its own correct execution. This is the magic that allows Starknet to verify massive computations off-chain.</p>
+                    <p class="text-gray-600">Its potential extends beyond blockchain to any field requiring verifiable computation, like AI and gaming.</p>
+                </div>
+                 <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-4">Key Programming Concepts</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                        <li><strong>`felt252` Type:</strong> The primary data type is a field element, a 252-bit number. Arithmetic is modular, requiring careful handling to avoid overflows.</li>
+                        <li><strong>Native Account Abstraction:</strong> All accounts are smart contracts, enabling flexible features like social recovery, session keys, and paying gas in any token.</li>
+                        <li><strong>State Management:</strong> Contract storage is managed explicitly, providing clear control over data persistence.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card p-6 md:p-8">
+                <h3 class="text-2xl font-bold text-center mb-8">Developer Tooling & Resources</h3>
+                <div id="cairo-tools" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </div>
+        </section>
+
+        <!-- Ecosystem & Future Section -->
+        <section id="section-ecosystem" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Starknet's Ecosystem & Future</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">The Starknet ecosystem is growing rapidly, with a diverse range of projects and a clear roadmap towards full decentralization. This section visualizes that growth and outlines the key pillars of Starknet's future development: Staking, Operations, and Governance.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 card p-6">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Ecosystem Growth: Projects on Starknet</h3>
+                    <div class="chart-container">
+                        <canvas id="ecosystemChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 card p-6">
+                    <h3 class="text-2xl font-bold mb-4">Road to Decentralization</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-lg">1. Staking (Economic Security)</h4>
+                            <p class="text-gray-600 text-sm">A Proof-of-Stake (PoS) mechanism where validators stake STRK tokens to secure the network and prevent attacks. Phase 1 is already live.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">2. Operation (SN Stack)</h4>
+                            <p class="text-gray-600 text-sm">The open-sourcing of the Starknet Stack (SN Stack) allows anyone to run a node, fostering a decentralized network of operators.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">3. Governance (Community Control)</h4>
+                            <p class="text-gray-600 text-sm">A phased approach to hand over control of protocol upgrades and treasury management to the community and STRK token holders.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-16">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>This interactive guide was generated from a technical report on Starknet. All content is for informational purposes.</p>
+        </div>
+    </footer>
+
+    <script>
+        const content = {
+            proofs: {
+                stark: {
+                    title: 'ZK-STARKs (Scalable Transparent ARgument of Knowledge)',
+                    features: [
+                        { name: 'Trusted Setup', value: 'Not required. Uses public randomness, making it more transparent and secure.', icon: '🛡️' },
+                        { name: 'Proof Size', value: 'Larger. This can lead to slightly higher on-chain verification costs.', icon: '📄' },
+                        { name: 'Quantum Resistance', value: 'Yes. Relies on hash functions, making it secure against future quantum computers.', icon: '🔒' },
+                        { name: 'Core Tech', value: 'Relies on hash functions and FRI protocol for its cryptographic security.', icon: '⚙️' }
+                    ]
+                },
+                snark: {
+                    title: 'ZK-SNARKs (Succinct Non-Interactive ARgument of Knowledge)',
+                    features: [
+                        { name: 'Trusted Setup', value: 'Often required. A setup ceremony generates keys; if compromised, the system is at risk.', icon: '⚠️' },
+                        { name: 'Proof Size', value: 'Smaller (succinct). This leads to faster and cheaper on-chain verification.', icon: '📃' },
+                        { name: 'Quantum Resistance', value: 'Generally no. Relies on elliptic curve cryptography, which is vulnerable to quantum attacks.', icon: '🔓' },
+                        { name: 'Core Tech', value: 'Primarily based on elliptic curve cryptography.', icon: '➿' }
+                    ]
+                }
+            },
+            architecture: {
+                user: {
+                    title: '1. User Submits Transaction',
+                    description: "The process begins when a user initiates a transaction through their account contract on Starknet. Thanks to Native Account Abstraction, this 'account' is a flexible smart contract, not just a simple key pair."
+                },
+                sequencer: {
+                    title: '2. The Starknet Sequencer',
+                    description: "The Sequencer receives transactions, orders them, and groups them into batches. It filters out any failed transactions, ensuring only valid ones are processed. Starknet's Sequencer can handle a much higher throughput than Ethereum's mainnet."
+                },
+                prover: {
+                    title: '3. The Starknet Prover',
+                    description: "This is where the STARK magic happens. The Prover takes the batch of transactions and executes them, generating an 'Execution Trace'. It then uses complex cryptography to create a single, compact STARK proof that mathematically guarantees the validity of every transaction in the batch."
+                },
+                verifier: {
+                    title: '4. The On-Chain Verifier',
+                    description: "The STARK proof is sent to a Verifier smart contract on the Ethereum L1. This contract's job is not to re-run the transactions, but to perform a quick and cheap verification of the proof. If the proof is valid, it confirms the entire batch of off-chain work was done correctly."
+                },
+                finality: {
+                    title: '5. State Update & Finality',
+                    description: "Once the Verifier contract accepts the proof, the Starknet Core contract on Ethereum updates its state to reflect the results of the off-chain transactions. At this point, the transactions are considered final and have the full security of the Ethereum mainnet."
+                }
+            },
+            cairoTools: [
+                { name: 'Scarb', description: 'The official package manager and build toolchain for Cairo and Starknet projects.', icon: '📦' },
+                { name: 'Starknet Foundry', description: 'A blazing fast toolchain for developing Starknet smart contracts, written in Rust.', icon: '🔥' },
+                { name: 'Starknet.js', description: 'The primary JavaScript/TypeScript library for connecting frontends to Starknet.', icon: '📜' },
+                { name: 'Starkli', description: 'A fast and intuitive command-line interface (CLI) for interacting with Starknet.', icon: '💻' },
+                { name: 'OpenZeppelin Contracts', description: 'A library of secure and battle-tested reusable smart contracts for Cairo.', icon: '🛡️' },
+                { name: 'Local Devnets', description: 'Tools like Starknet Devnet allow for rapid local testing and development without deploying to a live network.', icon: '🏠' }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+            const sections = document.querySelectorAll('.content-section');
+
+            function setActiveSection(id) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.id === `nav-${id}`);
+                });
+                sections.forEach(section => {
+                    section.classList.toggle('active', section.id === `section-${id}`);
+                });
+                if (mobileNav.value !== id) {
+                    mobileNav.value = id;
+                }
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    const id = link.id.replace('nav-', '');
+                    setActiveSection(id);
+                });
+            });
+
+            mobileNav.addEventListener('change', (e) => {
+                setActiveSection(e.target.value);
+            });
+
+            // Proofs comparison logic
+            const btnSnark = document.getElementById('btn-snark');
+            const btnStark = document.getElementById('btn-stark');
+            const proofContent = document.getElementById('proof-comparison-content');
+
+            function renderProofContent(type) {
+                const data = content.proofs[type];
+                let html = `<h4 class="text-xl font-bold mb-4 text-center">${data.title}</h4><div class="grid sm:grid-cols-2 gap-4">`;
+                data.features.forEach(feature => {
+                    html += `
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center mb-2">
+                                <span class="text-2xl mr-3">${feature.icon}</span>
+                                <h5 class="font-semibold text-gray-700">${feature.name}</h5>
+                            </div>
+                            <p class="text-gray-600 text-sm">${feature.value}</p>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                proofContent.innerHTML = html;
+            }
+
+            btnStark.addEventListener('click', () => {
+                btnStark.classList.add('active');
+                btnSnark.classList.remove('active');
+                renderProofContent('stark');
+            });
+            btnSnark.addEventListener('click', () => {
+                btnSnark.classList.add('active');
+                btnStark.classList.remove('active');
+                renderProofContent('snark');
+            });
+            renderProofContent('stark'); // Initial render
+
+            // Architecture diagram logic
+            const archDiagram = document.querySelector('.architecture-diagram');
+            const archDetails = document.getElementById('architecture-details');
+            const archElements = document.querySelectorAll('.architecture-diagram div[id^="arch-"]');
+
+            archElements.forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.id.replace('arch-', '');
+                    const data = content.architecture[id];
+
+                    archElements.forEach(elem => elem.classList.remove('selected'));
+                    el.classList.add('selected');
+
+                    if (data) {
+                        archDetails.innerHTML = `
+                            <h4 class="font-bold text-xl mb-2">${data.title}</h4>
+                            <p class="text-gray-700">${data.description}</p>
+                        `;
+                    }
+                });
+            });
+
+            // Cairo tools
+            const toolsContainer = document.getElementById('cairo-tools');
+            let toolsHtml = '';
+            content.cairoTools.forEach(tool => {
+                toolsHtml += `
+                    <div class="card p-5 flex items-start space-x-4">
+                        <div class="text-3xl">${tool.icon}</div>
+                        <div>
+                            <h4 class="font-bold text-lg">${tool.name}</h4>
+                            <p class="text-gray-600 text-sm">${tool.description}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            toolsContainer.innerHTML = toolsHtml;
+
+
+            // Ecosystem Chart
+            const ctx = document.getElementById('ecosystemChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Nov 2023', 'Nov 2024'],
+                    datasets: [{
+                        label: 'User-Facing Projects on Starknet',
+                        data: [72, 193],
+                        backgroundColor: [
+                            'rgba(143, 188, 143, 0.6)', // DarkSeaGreen
+                            'rgba(46, 139, 87, 0.6)'    // SeaGreen
+                        ],
+                        borderColor: [
+                            'rgba(143, 188, 143, 1)',
+                            'rgba(46, 139, 87, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Projects'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.raw} projects`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
